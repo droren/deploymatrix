@@ -26,6 +26,7 @@
           - "5432:5432"
         volumes:
           - postgres_data:/var/lib/postgresql/data
+      when: not ansible_check_mode
 
     - name: Run Synapse container
       containers.podman.podman_container:
@@ -39,6 +40,7 @@
           - "8008:8008"
         volumes:
           - synapse_data:/data
+      when: not ansible_check_mode
 
     - name: Run Coturn container
       containers.podman.podman_container:
@@ -47,6 +49,7 @@
         state: started
         ports:
           - "3478:3478/udp"
+      when: not ansible_check_mode
 
     - name: Run Element Web container
       containers.podman.podman_container:
@@ -55,6 +58,7 @@
         state: started
         ports:
           - "8080:80"
+      when: not ansible_check_mode
 
     - name: Run Element Call container
       containers.podman.podman_container:
@@ -63,6 +67,7 @@
         state: started
         ports:
           - "5082:80"
+      when: not ansible_check_mode
 
     - name: Run Keycloak container
       containers.podman.podman_container:
@@ -74,3 +79,4 @@
           KEYCLOAK_ADMIN_PASSWORD: admin
         ports:
           - "8081:8080"
+      when: not ansible_check_mode
