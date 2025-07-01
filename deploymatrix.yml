@@ -1,0 +1,76 @@
+---
+- name: Deploy Matrix stack with Podman
+  hosts: all
+  gather_facts: false
+  vars:
+    synapse_image: docker.io/matrixdotorg/synapse:latest
+    postgres_image: docker.io/library/postgres:16-alpine
+    coturn_image: docker.io/instrumentisto/coturn:latest
+    element_web_image: docker.io/vectorim/element-web:latest
+    element_call_image: docker.io/elementcall/element-call:latest
+    keycloak_image: docker.io/bitnami/keycloak:latest
+  tasks:
+    - name: Ensure Podman is installed
+      ansible.builtin.package:
+        name: podman
+        state: present
+
+    - name: Run PostgreSQL container
+      containers.podman.podman_container:
+        name: postgres
+        image: "{{ postgres_image }}"
+        state: started
+        env:
+          POSTGRES_PASSWORD: synapse
+        ports:
+          - "5432:5432"
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+
+    - name: Run Synapse container
+      containers.podman.podman_container:
+        name: synapse
+        image: "{{ synapse_image }}"
+        state: started
+        env:
+          SYNAPSE_SERVER_NAME: "{{ inventory_hostname }}"
+          SYNAPSE_REPORT_STATS: "no"
+        ports:
+          - "8008:8008"
+        volumes:
+          - synapse_data:/data
+
+    - name: Run Coturn container
+      containers.podman.podman_container:
+        name: coturn
+        image: "{{ coturn_image }}"
+        state: started
+        ports:
+          - "3478:3478/udp"
+
+    - name: Run Element Web container
+      containers.podman.podman_container:
+        name: element-web
+        image: "{{ element_web_image }}"
+        state: started
+        ports:
+          - "8080:80"
+
+    - name: Run Element Call container
+      containers.podman.podman_container:
+        name: element-call
+        image: "{{ element_call_image }}"
+        state: started
+        ports:
+          - "5082:80"
+
+    - name: Run Keycloak container
+      containers.podman.podman_container:
+        name: keycloak
+        image: "{{ keycloak_image }}"
+        state: started
+        env:
+          KEYCLOAK_ADMIN: admin
+          KEYCLOAK_ADMIN_PASSWORD: admin
+        ports:
+          - "8081:8080"
