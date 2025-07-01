@@ -2,6 +2,7 @@
 - name: Deploy Matrix stack with Podman
   hosts: all
   gather_facts: false
+  become: true
   vars:
     synapse_image: docker.io/matrixdotorg/synapse:latest
     postgres_image: docker.io/library/postgres:16-alpine
