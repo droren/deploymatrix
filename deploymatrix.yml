@@ -9,6 +9,7 @@
     element_web_image: docker.io/vectorim/element-web:latest
     element_call_image: docker.io/elementcall/element-call:latest
     keycloak_image: docker.io/bitnami/keycloak:latest
+    nginx_image: docker.io/library/nginx:latest
   tasks:
     - name: Ensure Podman is installed
       ansible.builtin.package:
@@ -27,6 +28,7 @@
         volumes:
           - postgres_data:/var/lib/postgresql/data
       when: not ansible_check_mode
+
 
     - name: Run Synapse container
       containers.podman.podman_container:
@@ -79,4 +81,36 @@
           KEYCLOAK_ADMIN_PASSWORD: admin
         ports:
           - "8081:8080"
+      when: not ansible_check_mode
+
+    - name: Create Nginx configuration
+      ansible.builtin.copy:
+        dest: "{{ ansible_env.HOME }}/nginx.conf"
+        content: |
+          server {
+              listen 80;
+              location / {
+                  proxy_pass http://localhost:8080;
+              }
+              location /call/ {
+                  proxy_pass http://localhost:5082/;
+              }
+              location /synapse/ {
+                  proxy_pass http://localhost:8008/;
+              }
+              location /keycloak/ {
+                  proxy_pass http://localhost:8081/;
+              }
+          }
+      when: not ansible_check_mode
+
+    - name: Run Nginx container
+      containers.podman.podman_container:
+        name: nginx
+        image: "{{ nginx_image }}"
+        state: started
+        ports:
+          - "80:80"
+        volumes:
+          - "{{ ansible_env.HOME }}/nginx.conf:/etc/nginx/conf.d/default.conf:ro"
       when: not ansible_check_mode
