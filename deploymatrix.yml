@@ -86,6 +86,7 @@
     - name: Create Nginx configuration
       ansible.builtin.copy:
         dest: "{{ ansible_env.HOME }}/nginx.conf"
+        mode: '0644'
         content: |
           server {
               listen 80;
