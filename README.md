@@ -49,5 +49,5 @@ This project uses `ansible-lint` and `ansible-playbook --syntax-check` to valida
 
 ## Project Status
 
-This repository currently contains only the initial plan. Playbooks, inventory examples and automation scripts will be added in future commits.
+This repository now includes a working `deploymatrix.yml` playbook, sample inventory and CI workflows. Future updates may refine configuration and add more extensive documentation.
 
