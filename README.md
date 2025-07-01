@@ -12,6 +12,7 @@ The deployment provisions the following services:
 - **Element Web** – web interface for chat.
 - **Element Call** – WebRTC calling client.
 - **Keycloak** – optional SSO provider.
+- **Nginx** – reverse proxy providing friendly URLs for the services.
 
 Server-side services (Synapse, PostgreSQL, Coturn) run inside a single container. Client-facing services (Element Web and Element Call) run in a separate container. Both containers are managed by Podman in rootless mode.
 
@@ -42,6 +43,28 @@ Most variables have sensible defaults. Wherever possible, credentials (such as P
    To perform a dry run, add `--check`.
 
 The playbook supports running on the local machine or targeting a remote server via SSH. Because containers are rootless, the same playbook can be executed under a normal user account or a dedicated service account.
+
+## Usage and Administration
+
+After deployment, an Nginx reverse proxy listens on port `80` and routes
+requests to each service:
+
+- `http://<host>/` → Element Web
+- `http://<host>/call/` → Element Call
+- `http://<host>/synapse/` → Synapse
+- `http://<host>/keycloak/` → Keycloak
+
+Open these firewall ports on the host:
+
+- `80/tcp` for the Nginx proxy
+- `3478/udp` for Coturn
+- Optionally `8008/tcp`, `8080/tcp`, `8081/tcp` and `5082/tcp` for direct access
+  to individual containers.
+
+Administrative endpoints include the Synapse admin API at
+`/synapse/_synapse/admin` and the Keycloak console at `/keycloak/` using the
+default `admin` credentials. Element Web and Element Call require no additional
+administration.
 
 ## Linting and Tests
 
