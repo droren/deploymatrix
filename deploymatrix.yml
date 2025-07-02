@@ -5,6 +5,7 @@
   become: true
   vars:
     synapse_image: docker.io/matrixdotorg/synapse:latest
+    synapse_server_name: "{{ ansible_fqdn }}"
     postgres_image: docker.io/library/postgres:16-alpine
     coturn_image: docker.io/instrumentisto/coturn:latest
     element_web_image: docker.io/vectorim/element-web:latest
@@ -34,6 +35,22 @@
       when: not ansible_check_mode
 
 
+    - name: Generate Synapse configuration
+      containers.podman.podman_container:
+        name: synapse-init
+        image: "{{ synapse_image }}"
+        command: generate
+        rm: true
+        detach: false
+        network_mode: none
+        env:
+          SYNAPSE_SERVER_NAME: "{{ synapse_server_name }}"
+          SYNAPSE_REPORT_STATS: "no"
+        volumes:
+          - synapse_data:/data
+      when: not ansible_check_mode
+
+
     - name: Run Synapse container
       containers.podman.podman_container:
         name: synapse
@@ -41,7 +58,7 @@
         state: started
         network_mode: host
         env:
-          SYNAPSE_SERVER_NAME: "{{ inventory_hostname }}"
+          SYNAPSE_SERVER_NAME: "{{ synapse_server_name }}"
           SYNAPSE_REPORT_STATS: "no"
           POSTGRES_HOST: localhost
           POSTGRES_PORT: "5432"
