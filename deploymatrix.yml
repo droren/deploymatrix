@@ -1,7 +1,7 @@
 ---
 - name: Deploy Matrix stack with Podman
   hosts: all
-  gather_facts: false
+  gather_facts: true
   become: true
   vars:
     synapse_image: docker.io/matrixdotorg/synapse:latest
@@ -22,8 +22,11 @@
         name: postgres
         image: "{{ postgres_image }}"
         state: started
+        network_mode: host
         env:
+          POSTGRES_USER: synapse
           POSTGRES_PASSWORD: synapse
+          POSTGRES_DB: synapse
         ports:
           - "5432:5432"
         volumes:
@@ -36,9 +39,15 @@
         name: synapse
         image: "{{ synapse_image }}"
         state: started
+        network_mode: host
         env:
           SYNAPSE_SERVER_NAME: "{{ inventory_hostname }}"
           SYNAPSE_REPORT_STATS: "no"
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: "5432"
+          POSTGRES_USER: synapse
+          POSTGRES_PASSWORD: synapse
+          POSTGRES_DB: synapse
         ports:
           - "8008:8008"
         volumes:
@@ -50,6 +59,7 @@
         name: coturn
         image: "{{ coturn_image }}"
         state: started
+        network_mode: host
         ports:
           - "3478:3478/udp"
       when: not ansible_check_mode
@@ -59,6 +69,7 @@
         name: element-web
         image: "{{ element_web_image }}"
         state: started
+        network_mode: host
         ports:
           - "8080:80"
       when: not ansible_check_mode
@@ -68,6 +79,7 @@
         name: element-call
         image: "{{ element_call_image }}"
         state: started
+        network_mode: host
         ports:
           - "5082:80"
       when: not ansible_check_mode
@@ -77,6 +89,7 @@
         name: keycloak
         image: "{{ keycloak_image }}"
         state: started
+        network_mode: host
         env:
           KEYCLOAK_ADMIN: admin
           KEYCLOAK_ADMIN_PASSWORD: admin
@@ -111,6 +124,7 @@
         name: nginx
         image: "{{ nginx_image }}"
         state: started
+        network_mode: host
         ports:
           - "80:80"
         volumes:
